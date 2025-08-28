@@ -22,4 +22,15 @@ A **Streamlit web application** to generate **professional payslips in PDF forma
 
 ```bash
 git clone https://github.com/khanwasik1449/PayslipStreamlit.git
-cd PayslipStreamlit
+Deployment
+
+Deploy on Streamlit Cloud:
+
+Push your repository to GitHub.
+
+Go to Streamlit Cloud
+.
+
+Connect your GitHub repo and deploy.
+
+Streamlit Cloud will automatically install all dependencies from requirements.txt.
