@@ -17,7 +17,7 @@ with st.form("payslip_form"):
     designation = st.text_input("Designation")
     joiningDate = st.date_input("Joining Date")
     
-    salary = st.number_input("Basic Salary", value=0)
+    salary = st.number_input("Salary", value=0)
     allowance = st.number_input("Allowance", value=0)
     transport = st.number_input("Transport Deduction", value=0)
     tax = st.number_input("Tax Deduction", value=0)
