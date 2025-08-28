@@ -3,11 +3,10 @@ from fpdf import FPDF
 import os
 from datetime import datetime
 
-# Folder to save generated payslips
 SAVE_FOLDER = "Payslips"
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 
-st.title("💼 Payslip Generator (PDF Template)")
+st.title("💼 Payslip Generator (Template Style)")
 
 # Employee Input
 employeeName = st.text_input("Employee Name")
@@ -36,39 +35,65 @@ if st.button("Generate Payslip"):
         # Create PDF
         pdf = FPDF('P', 'mm', 'A4')
         pdf.add_page()
-        pdf.set_font("Arial", "B", 18)
-        pdf.cell(0, 10, "Payslip", ln=True, align="C")
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # Header
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "Company Name", ln=True, align="C")
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Payslip for {payslipMonth}", ln=True, align="C")
+        pdf.ln(5)
+
+        # Employee Info Table
+        pdf.set_font("Arial", "", 12)
+        pdf.cell(50, 8, "Employee Name:", border=0)
+        pdf.cell(0, 8, employeeName, ln=True)
+        pdf.cell(50, 8, "PIN:", border=0)
+        pdf.cell(0, 8, pin, ln=True)
+        pdf.cell(50, 8, "Designation:", border=0)
+        pdf.cell(0, 8, designation, ln=True)
+        pdf.cell(50, 8, "Joining Date:", border=0)
+        pdf.cell(0, 8, str(joiningDate), ln=True)
+        pdf.ln(5)
+
+        # Earnings Table
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(95, 8, "Earnings", border=1, align="C")
+        pdf.cell(95, 8, "Amount (BDT)", border=1, ln=True, align="C")
 
         pdf.set_font("Arial", "", 12)
-        pdf.ln(10)
-
-        # Employee Info
-        pdf.cell(0, 8, f"Employee Name: {employeeName}", ln=True)
-        pdf.cell(0, 8, f"PIN: {pin}", ln=True)
-        pdf.cell(0, 8, f"Designation: {designation}", ln=True)
-        pdf.cell(0, 8, f"Joining Date: {joiningDate}", ln=True)
-        pdf.cell(0, 8, f"Payslip Month: {payslipMonth}", ln=True)
-
-        pdf.ln(5)
-
-        # Earnings
-        pdf.cell(0, 8, f"Basic: BDT {basic_comp:,.2f}", ln=True)
-        pdf.cell(0, 8, f"House Rent: BDT {house_rent:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Medical: BDT {medical:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Conveyance: BDT {conveyance:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Allowance: BDT {allowance:,.2f}", ln=True)
+        earnings = {
+            "Basic": basic_comp,
+            "House Rent": house_rent,
+            "Medical": medical,
+            "Conveyance": conveyance,
+            "Allowance": allowance
+        }
+        for key, val in earnings.items():
+            pdf.cell(95, 8, key, border=1)
+            pdf.cell(95, 8, f"{val:,.2f}", border=1, ln=True)
 
         pdf.ln(5)
 
-        # Deductions
-        pdf.cell(0, 8, f"Transport Deduction: BDT {transport:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Tax Deduction: BDT {tax:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Other Deductions: BDT {otherDeductions:,.2f}", ln=True)
-        pdf.cell(0, 8, f"Total Deductions: BDT {totalDeductions:,.2f}", ln=True)
+        # Deductions Table
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(95, 8, "Deductions", border=1, align="C")
+        pdf.cell(95, 8, "Amount (BDT)", border=1, ln=True, align="C")
+
+        pdf.set_font("Arial", "", 12)
+        deductions = {
+            "Transport": transport,
+            "Tax": tax,
+            "Other": otherDeductions,
+            "Total Deductions": totalDeductions
+        }
+        for key, val in deductions.items():
+            pdf.cell(95, 8, key, border=1)
+            pdf.cell(95, 8, f"{val:,.2f}", border=1, ln=True)
 
         pdf.ln(10)
         pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, f"Net Salary: BDT {netSalary:,.2f}", ln=True)
+        pdf.cell(0, 10, f"Net Salary: BDT {netSalary:,.2f}", ln=True, align="C")
 
         # Save PDF
         filename_pdf = os.path.join(SAVE_FOLDER, f"Payslip_{employeeName}_{payslipMonth}.pdf")
