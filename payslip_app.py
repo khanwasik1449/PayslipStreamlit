@@ -1,90 +1,107 @@
-# Filename: payslip_app.py
 import streamlit as st
+import pandas as pd
 from fpdf import FPDF
+from datetime import datetime
+import os
 
-st.set_page_config(page_title="Payslip Generator", page_icon="💰")
+# Folder to save payslips
+SAVE_FOLDER = "Payslips"
+os.makedirs(SAVE_FOLDER, exist_ok=True)
+
+# Streamlit UI
 st.title("💼 Payslip Generator")
 
-# Payslip Form
 with st.form("payslip_form"):
-    st.subheader("Employee Details")
-    name = st.text_input("Employee Name")
-    emp_id = st.text_input("Employee ID")
+    employeeName = st.text_input("Employee Name")
+    pin = st.text_input("PIN")
     designation = st.text_input("Designation")
+    joiningDate = st.date_input("Joining Date")
     
-    st.subheader("Salary Components")
-    basic = st.number_input("Basic Pay", value=0)
-    house_rent = st.number_input("House Rent Allowance", value=0)
-    medical = st.number_input("Medical Allowance", value=0)
-    conveyance = st.number_input("Conveyance Allowance", value=0)
-    bonus = st.number_input("Festival Bonus", value=0)
-    
-    st.subheader("Deductions")
+    salary = st.number_input("Basic Salary", value=0)
+    allowance = st.number_input("Allowance", value=0)
+    transport = st.number_input("Transport Deduction", value=0)
     tax = st.number_input("Tax Deduction", value=0)
-    loan = st.number_input("Loan Deduction", value=0)
+    otherDeductions = st.number_input("Other Deductions", value=0)
+    payslipMonth = st.text_input("Payslip Month (e.g., August 2025)")
     
     submitted = st.form_submit_button("Generate Payslip")
 
-# Function to generate PDF
-def create_payslip_pdf(name, emp_id, designation, basic, house_rent, medical, conveyance, bonus, tax, loan):
+# Generate Payslip
+if submitted:
+    # Salary components
+    basic = round(0.5 * salary)
+    houseRent = round(0.3 * salary)
+    medical = round(0.1 * salary)
+    conveyance = round(0.1 * salary)
+    
+    # Total deductions
+    totalDeductions = transport + tax + otherDeductions
+    
+    # Net salary
+    netSalary = salary + allowance - totalDeductions
+
+    # Log data to CSV
+    df = pd.DataFrame([{
+        "Timestamp": datetime.now(),
+        "Employee Name": employeeName,
+        "PIN": pin,
+        "Designation": designation,
+        "Joining Date": joiningDate,
+        "Salary": salary,
+        "Allowance": allowance,
+        "Transport": transport,
+        "Tax": tax,
+        "Other Deductions": otherDeductions,
+        "Total Deductions": totalDeductions,
+        "Net Salary": netSalary,
+        "Basic": basic,
+        "House Rent": houseRent,
+        "Medical": medical,
+        "Conveyance": conveyance,
+        "Payslip Month": payslipMonth
+    }])
+    
+    log_file = "payslip_log.csv"
+    if os.path.exists(log_file):
+        df.to_csv(log_file, mode='a', header=False, index=False)
+    else:
+        df.to_csv(log_file, index=False)
+    
+    # Generate PDF
     pdf = FPDF()
     pdf.add_page()
-    
-    # Title
-    pdf.set_font("Arial", "B", 18)
+    pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, "Payslip", ln=True, align="C")
     
     pdf.set_font("Arial", "", 12)
     pdf.ln(10)
-    
-    # Employee Info
-    pdf.cell(0, 8, f"Name: {name}", ln=True)
-    pdf.cell(0, 8, f"Employee ID: {emp_id}", ln=True)
+    pdf.cell(0, 8, f"Employee Name: {employeeName}", ln=True)
+    pdf.cell(0, 8, f"PIN: {pin}", ln=True)
     pdf.cell(0, 8, f"Designation: {designation}", ln=True)
-    
-    pdf.ln(10)
-    
-    # Earnings
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 8, "Earnings", ln=True)
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(0, 8, f"Basic Pay: BDT {basic:,.2f}", ln=True)
-    pdf.cell(0, 8, f"House Rent: BDT {house_rent:,.2f}", ln=True)
-    pdf.cell(0, 8, f"Medical Allowance: BDT {medical:,.2f}", ln=True)
-    pdf.cell(0, 8, f"Conveyance Allowance: BDT {conveyance:,.2f}", ln=True)
-    pdf.cell(0, 8, f"Festival Bonus: BDT {bonus:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Joining Date: {joiningDate}", ln=True)
+    pdf.cell(0, 8, f"Payslip Month: {payslipMonth}", ln=True)
     
     pdf.ln(5)
+    pdf.cell(0, 8, f"Basic: BDT {basic:,.2f}", ln=True)
+    pdf.cell(0, 8, f"House Rent: BDT {houseRent:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Medical: BDT {medical:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Conveyance: BDT {conveyance:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Allowance: BDT {allowance:,.2f}", ln=True)
     
-    # Deductions
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 8, "Deductions", ln=True)
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(0, 8, f"Tax: BDT {tax:,.2f}", ln=True)
-    pdf.cell(0, 8, f"Loan: BDT {loan:,.2f}", ln=True)
+    pdf.ln(5)
+    pdf.cell(0, 8, f"Transport Deduction: BDT {transport:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Tax Deduction: BDT {tax:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Other Deductions: BDT {otherDeductions:,.2f}", ln=True)
+    pdf.cell(0, 8, f"Total Deductions: BDT {totalDeductions:,.2f}", ln=True)
     
     pdf.ln(10)
-    
-    # Net Salary
-    net_salary = basic + house_rent + medical + conveyance + bonus - tax - loan
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, f"Net Salary: BDT {net_salary:,.2f}", ln=True)
+    pdf.cell(0, 10, f"Net Salary: BDT {netSalary:,.2f}", ln=True)
     
     # Save PDF
-    filename = f"{emp_id}_payslip.pdf"
-    pdf.output(filename)
-    return filename
-
-# Generate PDF if submitted
-if submitted:
-    if name and emp_id:
-        filename = create_payslip_pdf(
-            name, emp_id, designation, basic, house_rent, medical, conveyance, bonus, tax, loan
-        )
-        st.success("Payslip generated successfully! 🎉")
-        
-        # Download button
-        with open(filename, "rb") as f:
-            st.download_button("💾 Download Payslip PDF", f, file_name=filename)
-    else:
-        st.error("Please enter at least Employee Name and ID.")
+    pdf_file = os.path.join(SAVE_FOLDER, f"Payslip_{employeeName}_{payslipMonth}.pdf")
+    pdf.output(pdf_file)
+    
+    st.success("Payslip generated successfully! 🎉")
+    with open(pdf_file, "rb") as f:
+        st.download_button("💾 Download Payslip PDF", f, file_name=os.path.basename(pdf_file))
