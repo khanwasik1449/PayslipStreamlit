@@ -1,7 +1,5 @@
 import streamlit as st
-from docx import Document
-from docx.shared import Pt
-from docx2pdf import convert
+from fpdf import FPDF
 import os
 from datetime import datetime
 
@@ -9,7 +7,7 @@ from datetime import datetime
 SAVE_FOLDER = "Payslips"
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 
-st.title("💼 Payslip Generator (Fixed Template)")
+st.title("💼 Payslip Generator (PDF Template)")
 
 # Employee Input
 employeeName = st.text_input("Employee Name")
@@ -35,46 +33,46 @@ if st.button("Generate Payslip"):
         totalDeductions = transport + tax + otherDeductions
         netSalary = salary + allowance - totalDeductions
 
-        # Load fixed template
-        TEMPLATE_PATH = "Payslip_Template.docx"  # put your template in the same folder
-        doc = Document(TEMPLATE_PATH)
+        # Create PDF
+        pdf = FPDF('P', 'mm', 'A4')
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 18)
+        pdf.cell(0, 10, "Payslip", ln=True, align="C")
 
-        # Mapping placeholders to actual values
-        placeholders = {
-            "{{employeeName}}": employeeName,
-            "{{pin}}": pin,
-            "{{designation}}": designation,
-            "{{joiningDate}}": str(joiningDate),
-            "{{salary}}": f"BDT {salary:,.2f}",
-            "{{allowance}}": f"BDT {allowance:,.2f}",
-            "{{transport}}": f"BDT {transport:,.2f}",
-            "{{tax}}": f"BDT {tax:,.2f}",
-            "{{otherDeductions}}": f"BDT {otherDeductions:,.2f}",
-            "{{totalDeductions}}": f"BDT {totalDeductions:,.2f}",
-            "{{netSalary}}": f"BDT {netSalary:,.2f}",
-            "{{basic}}": f"BDT {basic_comp:,.2f}",
-            "{{houseRent}}": f"BDT {house_rent:,.2f}",
-            "{{medical}}": f"BDT {medical:,.2f}",
-            "{{conveyance}}": f"BDT {conveyance:,.2f}",
-            "{{payslipMonth}}": payslipMonth
-        }
+        pdf.set_font("Arial", "", 12)
+        pdf.ln(10)
 
-        # Replace placeholders
-        for p in doc.paragraphs:
-            for key, val in placeholders.items():
-                if key in p.text:
-                    p.text = p.text.replace(key, val)
-                    for run in p.runs:
-                        run.font.size = Pt(12)
+        # Employee Info
+        pdf.cell(0, 8, f"Employee Name: {employeeName}", ln=True)
+        pdf.cell(0, 8, f"PIN: {pin}", ln=True)
+        pdf.cell(0, 8, f"Designation: {designation}", ln=True)
+        pdf.cell(0, 8, f"Joining Date: {joiningDate}", ln=True)
+        pdf.cell(0, 8, f"Payslip Month: {payslipMonth}", ln=True)
 
-        # Save DOCX
-        filename_docx = f"Payslip_{employeeName}_{payslipMonth}.docx"
-        filepath_docx = os.path.join(SAVE_FOLDER, filename_docx)
-        doc.save(filepath_docx)
+        pdf.ln(5)
 
-        # Convert to PDF
-        filename_pdf = filepath_docx.replace(".docx", ".pdf")
-        convert(filepath_docx, filename_pdf)
+        # Earnings
+        pdf.cell(0, 8, f"Basic: BDT {basic_comp:,.2f}", ln=True)
+        pdf.cell(0, 8, f"House Rent: BDT {house_rent:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Medical: BDT {medical:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Conveyance: BDT {conveyance:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Allowance: BDT {allowance:,.2f}", ln=True)
+
+        pdf.ln(5)
+
+        # Deductions
+        pdf.cell(0, 8, f"Transport Deduction: BDT {transport:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Tax Deduction: BDT {tax:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Other Deductions: BDT {otherDeductions:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Total Deductions: BDT {totalDeductions:,.2f}", ln=True)
+
+        pdf.ln(10)
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Net Salary: BDT {netSalary:,.2f}", ln=True)
+
+        # Save PDF
+        filename_pdf = os.path.join(SAVE_FOLDER, f"Payslip_{employeeName}_{payslipMonth}.pdf")
+        pdf.output(filename_pdf)
 
         st.success("Payslip generated successfully! 🎉")
         with open(filename_pdf, "rb") as f:
